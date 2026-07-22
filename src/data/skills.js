@@ -1,25 +1,7 @@
-export const modules = [
-  {
-    id: "docs",
-    title: "Модуль 1 · Документы и офис",
-    description: "Работа с Word, PDF, PowerPoint, Excel и роутинг файлов",
-  },
-  {
-    id: "design",
-    title: "Модуль 2 · Дизайн и визуал",
-    description: "Интерфейсы, постеры и генеративная графика",
-  },
-  {
-    id: "advanced",
-    title: "Модуль 3 · Продвинутое",
-    description: "Метаскиллы: создание скиллов, MCP, знание продукта",
-  },
-];
-
 export const skills = [
   {
     id: "docx",
-    module: "docs",
+    moduleId: "m1",
     emoji: "📄",
     name: "DOCX",
     badge: "PUBLIC",
@@ -48,7 +30,7 @@ export const skills = [
   },
   {
     id: "pdf",
-    module: "docs",
+    moduleId: "m1",
     emoji: "📋",
     name: "PDF",
     badge: "PUBLIC",
@@ -78,7 +60,7 @@ export const skills = [
   },
   {
     id: "pdf-reading",
-    module: "docs",
+    moduleId: "m1",
     emoji: "🔍",
     name: "PDF Reading",
     badge: "PUBLIC",
@@ -105,7 +87,7 @@ export const skills = [
   },
   {
     id: "pptx",
-    module: "docs",
+    moduleId: "m1",
     emoji: "📊",
     name: "PPTX",
     badge: "PUBLIC",
@@ -133,7 +115,7 @@ export const skills = [
   },
   {
     id: "xlsx",
-    module: "docs",
+    moduleId: "m1",
     emoji: "📈",
     name: "XLSX",
     badge: "PUBLIC",
@@ -162,7 +144,7 @@ export const skills = [
   },
   {
     id: "file-reading",
-    module: "docs",
+    moduleId: "m1",
     emoji: "📂",
     name: "File Reading",
     badge: "PUBLIC",
@@ -190,7 +172,7 @@ export const skills = [
   },
   {
     id: "frontend-design",
-    module: "design",
+    moduleId: "m2",
     emoji: "🎨",
     name: "Frontend Design",
     badge: "PUBLIC",
@@ -218,7 +200,7 @@ export const skills = [
   },
   {
     id: "canvas-design",
-    module: "design",
+    moduleId: "m2",
     emoji: "🖼️",
     name: "Canvas Design",
     badge: "EXAMPLE",
@@ -243,7 +225,7 @@ export const skills = [
   },
   {
     id: "algorithmic-art",
-    module: "design",
+    moduleId: "m2",
     emoji: "🎭",
     name: "Algorithmic Art",
     badge: "EXAMPLE",
@@ -268,7 +250,7 @@ export const skills = [
   },
   {
     id: "product-self-knowledge",
-    module: "advanced",
+    moduleId: "m3",
     emoji: "🤖",
     name: "Product Self-Knowledge",
     badge: "PUBLIC",
@@ -294,7 +276,7 @@ export const skills = [
   },
   {
     id: "skill-creator",
-    module: "advanced",
+    moduleId: "m5",
     emoji: "🛠️",
     name: "Skill Creator",
     badge: "EXAMPLE",
@@ -321,7 +303,7 @@ export const skills = [
   },
   {
     id: "mcp-builder",
-    module: "advanced",
+    moduleId: "m6",
     emoji: "🔌",
     name: "MCP Builder",
     badge: "EXAMPLE",

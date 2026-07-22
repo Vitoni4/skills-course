@@ -1,4 +1,6 @@
-import { modules, skills } from "../data/skills.js";
+import { levels, modules } from "../data/curriculum.js";
+import { skills } from "../data/skills.js";
+import { isLevelUnlocked, moduleStats, totalDoneLessons, totalReadyLessons } from "../lib/progress.js";
 
 const categories = [
   { id: "all", label: "Все скиллы", count: skills.length },
@@ -6,7 +8,15 @@ const categories = [
   { id: "EXAMPLE", label: "Примеры", count: skills.filter((s) => s.badge === "EXAMPLE").length },
 ];
 
-export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, completed }) {
+function pluralizeLesson(n) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "урок";
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "урока";
+  return "уроков";
+}
+
+export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, progress }) {
   const filtered = skills.filter((s) => {
     const matchCat = filter === "all" || s.badge === filter;
     const matchSearch =
@@ -15,23 +25,26 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
       s.tagline.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
+  const filteredIds = new Set(filtered.map((s) => s.id));
+  const isFiltering = Boolean(search) || filter !== "all";
 
-  const doneCount = skills.filter((s) => completed.has(s.id)).length;
+  const doneCount = totalDoneLessons(progress);
+  const totalCount = totalReadyLessons();
 
   return (
-    <div style={{ width: 300, background: "#0f0f1e", borderRight: "1px solid #1e1e3a", display: "flex", flexDirection: "column", flexShrink: 0 }}>
+    <div style={{ width: 320, background: "#0f0f1e", borderRight: "1px solid #1e1e3a", display: "flex", flexDirection: "column", flexShrink: 0 }}>
       <div style={{ padding: "20px 16px 12px", borderBottom: "1px solid #1e1e3a" }}>
         <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4, background: "linear-gradient(135deg, #7C3AED, #3B82F6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
           Claude Skills — Курс
         </div>
         <div style={{ fontSize: 12, color: "#6b6b8a" }}>
-          Пройдено {doneCount} из {skills.length}
+          Пройдено {doneCount} из {totalCount}
         </div>
 
         <div style={{ marginTop: 8, height: 6, background: "#1a1a2e", borderRadius: 999, overflow: "hidden" }}>
           <div
             style={{
-              width: `${(doneCount / skills.length) * 100}%`,
+              width: `${totalCount ? (doneCount / totalCount) * 100 : 0}%`,
               height: "100%",
               background: "linear-gradient(90deg, #7C3AED, #3B82F6)",
               transition: "width 0.3s",
@@ -62,31 +75,82 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
       </div>
 
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {modules.map((mod) => {
-          const items = filtered.filter((s) => s.module === mod.id);
-          if (items.length === 0) return null;
+        {levels.map((level) => {
+          const unlocked = isLevelUnlocked(progress, level.id);
+          const levelModules = modules.filter((m) => m.levelId === level.id);
+
           return (
-            <div key={mod.id}>
-              <div style={{ padding: "10px 16px 4px", fontSize: 10, fontWeight: 700, color: "#4b4b6a", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                {mod.title}
+            <div key={level.id} style={{ borderBottom: "1px solid #14142a" }}>
+              <div style={{ padding: "12px 16px 6px", display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: unlocked ? "#e5e7eb" : "#4b4b6a" }}>
+                  {!unlocked && "🔒 "}
+                  Уровень {level.order} · {level.title}
+                </span>
+                <span style={{ fontSize: 10, color: "#4b4b6a" }}>{level.subtitle}</span>
               </div>
-              {items.map((s) => (
-                <div
-                  key={s.id}
-                  onClick={() => setSelected(s.id)}
-                  style={{ padding: "12px 16px", cursor: "pointer", borderLeft: selected === s.id ? `3px solid ${s.color}` : "3px solid transparent", background: selected === s.id ? s.color + "12" : "transparent", transition: "all 0.15s", borderBottom: "1px solid #0d0d1a" }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                    <span style={{ fontSize: 18 }}>{s.emoji}</span>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: selected === s.id ? "#f0f0f0" : "#d1d5db" }}>{s.name}</span>
-                    {completed.has(s.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
-                    {!completed.has(s.id) && (
-                      <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: s.badgeColor + "33", color: s.badgeColor, fontWeight: 700, letterSpacing: 0.5 }}>{s.badge}</span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#6b6b8a", lineHeight: 1.4 }}>{s.tagline}</div>
+
+              {!unlocked ? (
+                <div style={{ padding: "0 16px 14px", fontSize: 11, color: "#4b4b6a", lineHeight: 1.5 }}>
+                  Откроется после завершения предыдущего уровня
                 </div>
-              ))}
+              ) : (
+                levelModules.map((mod) => {
+                  const stats = moduleStats(progress, mod.id);
+                  const lessons = skills.filter((s) => s.moduleId === mod.id && filteredIds.has(s.id));
+                  const stubCount = Math.max(stats.lessonsPlanned - stats.lessonsReady, 0);
+
+                  if (stats.lessonsReady === 0) {
+                    if (isFiltering) return null;
+                    return (
+                      <div key={mod.id} style={{ padding: "6px 16px 12px" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#4b4b6a", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                          {mod.title}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#4b4b6a" }}>
+                          🚧 {mod.lessonsPlanned} {pluralizeLesson(mod.lessonsPlanned)} — в разработке
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (lessons.length === 0 && isFiltering) return null;
+
+                  return (
+                    <div key={mod.id} style={{ paddingBottom: 4 }}>
+                      <div style={{ padding: "6px 16px 2px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#4b4b6a", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                          {mod.title}
+                        </span>
+                        <span style={{ fontSize: 10, color: "#4b4b6a" }}>
+                          {stats.lessonsDone}/{stats.lessonsReady}
+                        </span>
+                      </div>
+                      {lessons.map((s) => (
+                        <div
+                          key={s.id}
+                          onClick={() => setSelected(s.id)}
+                          style={{ padding: "12px 16px", cursor: "pointer", borderLeft: selected === s.id ? `3px solid ${s.color}` : "3px solid transparent", background: selected === s.id ? s.color + "12" : "transparent", transition: "all 0.15s", borderBottom: "1px solid #0d0d1a" }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                            <span style={{ fontSize: 18 }}>{s.emoji}</span>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: selected === s.id ? "#f0f0f0" : "#d1d5db" }}>{s.name}</span>
+                            {progress.completedLessons.includes(s.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
+                            {!progress.completedLessons.includes(s.id) && (
+                              <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: s.badgeColor + "33", color: s.badgeColor, fontWeight: 700, letterSpacing: 0.5 }}>{s.badge}</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#6b6b8a", lineHeight: 1.4 }}>{s.tagline}</div>
+                        </div>
+                      ))}
+                      {stubCount > 0 && !isFiltering && (
+                        <div style={{ padding: "6px 16px", fontSize: 11, color: "#4b4b6a" }}>
+                          🚧 ещё {stubCount} {pluralizeLesson(stubCount)} — в разработке
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
           );
         })}

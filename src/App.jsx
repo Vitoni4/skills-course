@@ -4,37 +4,27 @@ import Lesson from "./components/Lesson.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import Welcome from "./components/Welcome.jsx";
 import { skills } from "./data/skills.js";
-
-const STORAGE_KEY = "skills-course-progress";
-
-function loadProgress() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
-  }
-}
+import { emptyProgress, loadProgress, markLessonDone, saveProgress, totalDoneLessons, totalReadyLessons } from "./lib/progress.js";
 
 export default function App() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
-  const [completed, setCompleted] = useState(loadProgress);
+  const [progress, setProgress] = useState(loadProgress);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed]));
-  }, [completed]);
+    saveProgress(progress);
+  }, [progress]);
 
   const sel = selected ? skills.find((s) => s.id === selected) : null;
-  const allDone = completed.size === skills.length;
+  const allDone = totalDoneLessons(progress) === totalReadyLessons();
 
   const markDone = (id) => {
-    setCompleted((prev) => new Set(prev).add(id));
+    setProgress((prev) => markLessonDone(prev, id));
   };
 
   const resetProgress = () => {
-    setCompleted(new Set());
+    setProgress(emptyProgress());
     setSelected(null);
   };
 
@@ -47,16 +37,16 @@ export default function App() {
         setSearch={setSearch}
         selected={selected}
         setSelected={setSelected}
-        completed={completed}
+        progress={progress}
       />
 
       <div style={{ flex: 1, overflowY: "auto" }}>
         {allDone && !sel ? (
-          <Certificate total={skills.length} onReset={resetProgress} />
+          <Certificate total={totalReadyLessons()} onReset={resetProgress} />
         ) : !sel ? (
           <Welcome />
         ) : (
-          <Lesson skill={sel} done={completed.has(sel.id)} onPass={() => markDone(sel.id)} />
+          <Lesson skill={sel} done={progress.completedLessons.includes(sel.id)} onPass={() => markDone(sel.id)} />
         )}
       </div>
     </div>
