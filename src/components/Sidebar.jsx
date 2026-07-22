@@ -1,7 +1,8 @@
 import { levels, modules } from "../data/curriculum.js";
 import { examPools } from "../data/exams.js";
 import { lessons } from "../data/lessons/index.js";
-import { isLevelUnlocked, isModuleExamPassed, moduleStats, totalDoneLessons, totalReadyLessons } from "../lib/progress.js";
+import { isLevelComplete, isLevelUnlocked, isModuleExamPassed, moduleStats, totalDoneLessons, totalReadyLessons } from "../lib/progress.js";
+import { lessonSearchText } from "../lib/search.js";
 
 const categories = [
   { id: "all", label: "Все уроки", count: lessons.length },
@@ -30,16 +31,16 @@ export default function Sidebar({
   activeScreen,
   courseComplete,
   capstoneComplete,
+  freeBrowse,
+  onToggleFreeBrowse,
   onOpenGlossary,
   onOpenBestPractices,
   onOpenCapstone,
+  onOpenStats,
 }) {
   const filtered = lessons.filter((l) => {
     const matchCat = filter === "all" || l.badge === filter;
-    const matchSearch =
-      !search ||
-      l.name.toLowerCase().includes(search.toLowerCase()) ||
-      l.tagline.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || lessonSearchText(l).includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
   const filteredIds = new Set(filtered.map((l) => l.id));
@@ -51,8 +52,27 @@ export default function Sidebar({
   return (
     <div style={{ width: 320, background: "#0f0f1e", borderRight: "1px solid #1e1e3a", display: "flex", flexDirection: "column", flexShrink: 0 }}>
       <div style={{ padding: "20px 16px 12px", borderBottom: "1px solid #1e1e3a" }}>
-        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4, background: "linear-gradient(135deg, #7C3AED, #3B82F6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          Claude Skills — Курс
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, background: "linear-gradient(135deg, #7C3AED, #3B82F6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            Claude Skills — Курс
+          </div>
+          <button
+            onClick={onToggleFreeBrowse}
+            title="Свободный просмотр: открыть все уровни для чтения без прохождения экзаменов"
+            style={{
+              fontSize: 9,
+              padding: "3px 7px",
+              borderRadius: 6,
+              border: `1px solid ${freeBrowse ? "#7C3AED" : "#2d2d4e"}`,
+              background: freeBrowse ? "#7C3AED22" : "transparent",
+              color: freeBrowse ? "#a78bfa" : "#6b6b8a",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              fontWeight: 700,
+            }}
+          >
+            👁 {freeBrowse ? "ВКЛ" : "ОБЗОР"}
+          </button>
         </div>
         <div style={{ fontSize: 12, color: "#6b6b8a" }}>
           Пройдено {doneCount} из {totalCount}
@@ -70,7 +90,7 @@ export default function Sidebar({
         </div>
 
         <input
-          placeholder="Поиск..."
+          placeholder="Поиск по всему контенту..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ marginTop: 12, width: "100%", background: "#1a1a2e", border: "1px solid #2d2d4e", borderRadius: 8, padding: "8px 12px", color: "#f0f0f0", fontSize: 12, outline: "none", boxSizing: "border-box" }}
@@ -93,14 +113,17 @@ export default function Sidebar({
 
       <div style={{ flex: 1, overflowY: "auto" }}>
         {levels.map((level) => {
-          const unlocked = isLevelUnlocked(progress, level.id);
+          const reallyUnlocked = isLevelUnlocked(progress, level.id);
+          const unlocked = reallyUnlocked || freeBrowse;
+          const complete = isLevelComplete(progress, level.id);
           const levelModules = modules.filter((m) => m.levelId === level.id);
 
           return (
             <div key={level.id} style={{ borderBottom: "1px solid #14142a" }}>
               <div style={{ padding: "12px 16px 6px", display: "flex", alignItems: "baseline", gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 800, color: unlocked ? "#e5e7eb" : "#4b4b6a" }}>
-                  {!unlocked && "🔒 "}
+                  {!reallyUnlocked && (freeBrowse ? "👁 " : "🔒 ")}
+                  {complete && "🏅 "}
                   Уровень {level.order} · {level.title}
                 </span>
                 <span style={{ fontSize: 10, color: "#4b4b6a" }}>{level.subtitle}</span>
@@ -111,79 +134,86 @@ export default function Sidebar({
                   Откроется после завершения предыдущего уровня
                 </div>
               ) : (
-                levelModules.map((mod) => {
-                  const stats = moduleStats(progress, mod.id);
-                  const moduleLessons = lessons.filter((l) => l.moduleId === mod.id && filteredIds.has(l.id));
-                  const stubCount = Math.max(stats.lessonsPlanned - stats.lessonsReady, 0);
+                <>
+                  {!reallyUnlocked && (
+                    <div style={{ padding: "0 16px 8px", fontSize: 10, color: "#a78bfa" }}>
+                      Свободный просмотр — прогресс по экзаменам не засчитывается, пока не открыт по-настоящему
+                    </div>
+                  )}
+                  {levelModules.map((mod) => {
+                    const stats = moduleStats(progress, mod.id);
+                    const moduleLessons = lessons.filter((l) => l.moduleId === mod.id && filteredIds.has(l.id));
+                    const stubCount = Math.max(stats.lessonsPlanned - stats.lessonsReady, 0);
 
-                  if (stats.lessonsReady === 0) {
-                    if (isFiltering) return null;
+                    if (stats.lessonsReady === 0) {
+                      if (isFiltering) return null;
+                      return (
+                        <div key={mod.id} style={{ padding: "6px 16px 12px" }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "#4b4b6a", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                            {mod.title}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#4b4b6a" }}>
+                            🚧 {mod.lessonsPlanned} {pluralizeLesson(mod.lessonsPlanned)} — в разработке
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (moduleLessons.length === 0 && isFiltering) return null;
+
                     return (
-                      <div key={mod.id} style={{ padding: "6px 16px 12px" }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#4b4b6a", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-                          {mod.title}
+                      <div key={mod.id} style={{ paddingBottom: 4 }}>
+                        <div style={{ padding: "6px 16px 2px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#4b4b6a", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                            {mod.title}
+                          </span>
+                          <span style={{ fontSize: 10, color: "#4b4b6a" }}>
+                            {stats.lessonsDone}/{stats.lessonsReady}
+                          </span>
                         </div>
-                        <div style={{ fontSize: 11, color: "#4b4b6a" }}>
-                          🚧 {mod.lessonsPlanned} {pluralizeLesson(mod.lessonsPlanned)} — в разработке
-                        </div>
+                        {moduleLessons.map((l) => (
+                          <div
+                            key={l.id}
+                            onClick={() => setSelected(l.id)}
+                            style={{ padding: "12px 16px", cursor: "pointer", borderLeft: selected === l.id ? `3px solid ${l.color}` : "3px solid transparent", background: selected === l.id ? l.color + "12" : "transparent", transition: "all 0.15s", borderBottom: "1px solid #0d0d1a" }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                              <span style={{ fontSize: 18 }}>{l.emoji}</span>
+                              <span style={{ fontWeight: 700, fontSize: 14, color: selected === l.id ? "#f0f0f0" : "#d1d5db" }}>{l.name}</span>
+                              {progress.completedLessons.includes(l.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
+                              {!progress.completedLessons.includes(l.id) && (
+                                <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: l.badgeColor + "33", color: l.badgeColor, fontWeight: 700, letterSpacing: 0.5 }}>{l.badge}</span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#6b6b8a", lineHeight: 1.4 }}>{l.tagline}</div>
+                          </div>
+                        ))}
+                        {stubCount > 0 && !isFiltering && (
+                          <div style={{ padding: "6px 16px", fontSize: 11, color: "#4b4b6a" }}>
+                            🚧 ещё {stubCount} {pluralizeLesson(stubCount)} — в разработке
+                          </div>
+                        )}
+                        {examPools[mod.id] && !isFiltering && (
+                          stats.allLessonsDone ? (
+                            <div
+                              onClick={() => onOpenExam(mod.id)}
+                              style={{ padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid #14142a" }}
+                            >
+                              <span style={{ fontSize: 13 }}>📝</span>
+                              <span style={{ fontSize: 12, color: "#d1d5db", fontWeight: 600 }}>Экзамен модуля</span>
+                              {isModuleExamPassed(progress, mod.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
+                            </div>
+                          ) : (
+                            <div style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid #14142a" }}>
+                              <span style={{ fontSize: 13, opacity: 0.4 }}>🔒</span>
+                              <span style={{ fontSize: 12, color: "#4b4b6a" }}>Экзамен — заверши уроки модуля</span>
+                            </div>
+                          )
+                        )}
                       </div>
                     );
-                  }
-
-                  if (moduleLessons.length === 0 && isFiltering) return null;
-
-                  return (
-                    <div key={mod.id} style={{ paddingBottom: 4 }}>
-                      <div style={{ padding: "6px 16px 2px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: "#4b4b6a", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          {mod.title}
-                        </span>
-                        <span style={{ fontSize: 10, color: "#4b4b6a" }}>
-                          {stats.lessonsDone}/{stats.lessonsReady}
-                        </span>
-                      </div>
-                      {moduleLessons.map((l) => (
-                        <div
-                          key={l.id}
-                          onClick={() => setSelected(l.id)}
-                          style={{ padding: "12px 16px", cursor: "pointer", borderLeft: selected === l.id ? `3px solid ${l.color}` : "3px solid transparent", background: selected === l.id ? l.color + "12" : "transparent", transition: "all 0.15s", borderBottom: "1px solid #0d0d1a" }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                            <span style={{ fontSize: 18 }}>{l.emoji}</span>
-                            <span style={{ fontWeight: 700, fontSize: 14, color: selected === l.id ? "#f0f0f0" : "#d1d5db" }}>{l.name}</span>
-                            {progress.completedLessons.includes(l.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
-                            {!progress.completedLessons.includes(l.id) && (
-                              <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: l.badgeColor + "33", color: l.badgeColor, fontWeight: 700, letterSpacing: 0.5 }}>{l.badge}</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#6b6b8a", lineHeight: 1.4 }}>{l.tagline}</div>
-                        </div>
-                      ))}
-                      {stubCount > 0 && !isFiltering && (
-                        <div style={{ padding: "6px 16px", fontSize: 11, color: "#4b4b6a" }}>
-                          🚧 ещё {stubCount} {pluralizeLesson(stubCount)} — в разработке
-                        </div>
-                      )}
-                      {examPools[mod.id] && !isFiltering && (
-                        stats.allLessonsDone ? (
-                          <div
-                            onClick={() => onOpenExam(mod.id)}
-                            style={{ padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid #14142a" }}
-                          >
-                            <span style={{ fontSize: 13 }}>📝</span>
-                            <span style={{ fontSize: 12, color: "#d1d5db", fontWeight: 600 }}>Экзамен модуля</span>
-                            {isModuleExamPassed(progress, mod.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
-                          </div>
-                        ) : (
-                          <div style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid #14142a" }}>
-                            <span style={{ fontSize: 13, opacity: 0.4 }}>🔒</span>
-                            <span style={{ fontSize: 12, color: "#4b4b6a" }}>Экзамен — заверши уроки модуля</span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  );
-                })
+                  })}
+                </>
               )}
             </div>
           );
@@ -191,6 +221,13 @@ export default function Sidebar({
       </div>
 
       <div style={{ borderTop: "1px solid #1e1e3a", padding: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div
+          onClick={onOpenStats}
+          style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, background: activeScreen === "stats" ? "#7C3AED22" : "transparent" }}
+        >
+          <span style={{ fontSize: 14 }}>📊</span>
+          <span style={{ fontSize: 12, color: activeScreen === "stats" ? "#f0f0f0" : "#9ca3af", fontWeight: 600 }}>Прогресс</span>
+        </div>
         <div
           onClick={onOpenGlossary}
           style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, background: activeScreen === "glossary" ? "#7C3AED22" : "transparent" }}

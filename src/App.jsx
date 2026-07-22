@@ -6,6 +6,7 @@ import Exam from "./components/Exam.jsx";
 import Glossary from "./components/Glossary.jsx";
 import Lesson from "./components/Lesson.jsx";
 import Sidebar from "./components/Sidebar.jsx";
+import Stats from "./components/Stats.jsx";
 import Welcome from "./components/Welcome.jsx";
 import { modules } from "./data/curriculum.js";
 import { examPools } from "./data/exams.js";
@@ -28,6 +29,8 @@ import {
   totalReadyLessons,
 } from "./lib/progress.js";
 
+const FREE_BROWSE_KEY = "skills-course-free-browse";
+
 export default function App() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -36,10 +39,15 @@ export default function App() {
   const [examModuleId, setExamModuleId] = useState(null);
   const [examAttempt, setExamAttempt] = useState(0);
   const [screen, setScreen] = useState("course");
+  const [freeBrowse, setFreeBrowse] = useState(() => localStorage.getItem(FREE_BROWSE_KEY) === "1");
 
   useEffect(() => {
     saveProgress(progress);
   }, [progress]);
+
+  useEffect(() => {
+    localStorage.setItem(FREE_BROWSE_KEY, freeBrowse ? "1" : "0");
+  }, [freeBrowse]);
 
   const sel = selected ? lessons.find((l) => l.id === selected) : null;
   const practice = sel ? practices[sel.id] : null;
@@ -92,7 +100,9 @@ export default function App() {
   };
 
   let content;
-  if (screen === "glossary") {
+  if (screen === "stats") {
+    content = <Stats progress={progress} />;
+  } else if (screen === "glossary") {
     content = <Glossary onOpenLesson={selectLesson} />;
   } else if (screen === "bestPractices") {
     content = <BestPractices />;
@@ -159,9 +169,12 @@ export default function App() {
         activeScreen={screen}
         courseComplete={courseComplete}
         capstoneComplete={capstoneComplete}
+        freeBrowse={freeBrowse}
+        onToggleFreeBrowse={() => setFreeBrowse((v) => !v)}
         onOpenGlossary={() => openStandaloneScreen("glossary")}
         onOpenBestPractices={() => openStandaloneScreen("bestPractices")}
         onOpenCapstone={() => courseComplete && openStandaloneScreen("capstone")}
+        onOpenStats={() => openStandaloneScreen("stats")}
       />
 
       <div style={{ flex: 1, overflowY: "auto" }}>{content}</div>
