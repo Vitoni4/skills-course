@@ -1,6 +1,7 @@
 import { levels, modules } from "../data/curriculum.js";
+import { examPools } from "../data/exams.js";
 import { skills } from "../data/skills.js";
-import { isLevelUnlocked, moduleStats, totalDoneLessons, totalReadyLessons } from "../lib/progress.js";
+import { isLevelUnlocked, isModuleExamPassed, moduleStats, totalDoneLessons, totalReadyLessons } from "../lib/progress.js";
 
 const categories = [
   { id: "all", label: "Все скиллы", count: skills.length },
@@ -16,7 +17,7 @@ function pluralizeLesson(n) {
   return "уроков";
 }
 
-export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, progress }) {
+export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, progress, onOpenExam }) {
   const filtered = skills.filter((s) => {
     const matchCat = filter === "all" || s.badge === filter;
     const matchSearch =
@@ -146,6 +147,23 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
                         <div style={{ padding: "6px 16px", fontSize: 11, color: "#4b4b6a" }}>
                           🚧 ещё {stubCount} {pluralizeLesson(stubCount)} — в разработке
                         </div>
+                      )}
+                      {examPools[mod.id] && !isFiltering && (
+                        stats.allLessonsDone ? (
+                          <div
+                            onClick={() => onOpenExam(mod.id)}
+                            style={{ padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid #14142a" }}
+                          >
+                            <span style={{ fontSize: 13 }}>📝</span>
+                            <span style={{ fontSize: 12, color: "#d1d5db", fontWeight: 600 }}>Экзамен модуля</span>
+                            {isModuleExamPassed(progress, mod.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
+                          </div>
+                        ) : (
+                          <div style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid #14142a" }}>
+                            <span style={{ fontSize: 13, opacity: 0.4 }}>🔒</span>
+                            <span style={{ fontSize: 12, color: "#4b4b6a" }}>Экзамен — заверши уроки модуля</span>
+                          </div>
+                        )
                       )}
                     </div>
                   );

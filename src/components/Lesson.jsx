@@ -1,6 +1,7 @@
+import Practice from "./Practice.jsx";
 import Quiz from "./Quiz.jsx";
 
-export default function Lesson({ skill, done, onPass }) {
+export default function Lesson({ skill, done, onPass, practice, practiceDraft, practiceDone, onPracticeDraftChange, onPracticeMarkDone }) {
   return (
     <div style={{ padding: "32px 40px", maxWidth: 800 }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 28 }}>
@@ -70,6 +71,17 @@ export default function Lesson({ skill, done, onPass }) {
       </div>
 
       <Quiz key={skill.id} skill={skill} onPass={onPass} />
+
+      {practice && (
+        <Practice
+          key={practice.id}
+          practice={practice}
+          draft={practiceDraft}
+          onDraftChange={onPracticeDraftChange}
+          done={practiceDone}
+          onMarkDone={onPracticeMarkDone}
+        />
+      )}
     </div>
   );
 }

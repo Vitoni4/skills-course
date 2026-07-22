@@ -1,4 +1,5 @@
 import { levels, modules } from "../data/curriculum.js";
+import { examPools } from "../data/exams.js";
 import { skills } from "../data/skills.js";
 
 const STORAGE_KEY = "skills-course-progress";
@@ -43,18 +44,42 @@ function readyLessonsForModule(moduleId) {
   return skills.filter((s) => s.moduleId === moduleId);
 }
 
-// A module is "complete" once every lesson that actually has content is
-// done. Modules whose lessons aren't written yet (lessonsReady === 0) are
-// vacuously complete so they never block level gating.
+export function isModuleExamPassed(progress, moduleId) {
+  return progress.examResults[moduleId]?.passed === true;
+}
+
+// A module counts as "complete" by its exam once one exists for it (the
+// real gate per the curriculum plan); until then, by every ready lesson
+// being done. Modules with no ready lessons yet are vacuously complete so
+// they never block level gating.
 export function moduleStats(progress, moduleId) {
   const mod = modules.find((m) => m.id === moduleId);
   const ready = readyLessonsForModule(moduleId);
   const done = ready.filter((l) => progress.completedLessons.includes(l.id)).length;
+  const hasExam = Boolean(examPools[moduleId]);
+  const allLessonsDone = ready.length === 0 || done === ready.length;
   return {
     lessonsPlanned: mod?.lessonsPlanned ?? ready.length,
     lessonsReady: ready.length,
     lessonsDone: done,
-    isComplete: ready.length === 0 || done === ready.length,
+    hasExam,
+    allLessonsDone,
+    isComplete: hasExam ? isModuleExamPassed(progress, moduleId) : allLessonsDone,
+  };
+}
+
+export function recordExamResult(progress, moduleId, { score, passed }) {
+  const prev = progress.examResults[moduleId] ?? { bestScore: 0, passed: false, attempts: 0 };
+  return {
+    ...progress,
+    examResults: {
+      ...progress.examResults,
+      [moduleId]: {
+        bestScore: Math.max(prev.bestScore, score),
+        passed: prev.passed || passed,
+        attempts: prev.attempts + 1,
+      },
+    },
   };
 }
 
@@ -63,9 +88,9 @@ export function isLevelComplete(progress, levelId) {
   return levelModules.every((m) => moduleStats(progress, m.id).isComplete);
 }
 
-// Interim gating: level N+1 unlocks once level N is complete. Once module
-// exams exist (Этап 2) this should switch to "all exams of the level passed"
-// instead of raw lesson completion.
+// Level N+1 unlocks once level N is complete — per-module that means "exam
+// passed" where a pool exists (moduleStats.isComplete), falling back to
+// "all ready lessons done" for modules whose exam pool isn't written yet.
 export function isLevelUnlocked(progress, levelId) {
   const level = levels.find((l) => l.id === levelId);
   if (!level) return false;
@@ -86,4 +111,16 @@ export function totalReadyLessons() {
 
 export function totalDoneLessons(progress) {
   return skills.filter((s) => progress.completedLessons.includes(s.id)).length;
+}
+
+export function setPracticeDraft(progress, practiceId, text) {
+  return { ...progress, practiceDrafts: { ...progress.practiceDrafts, [practiceId]: text } };
+}
+
+export function markPracticeDone(progress, practiceId) {
+  return { ...progress, practices: { ...progress.practices, [practiceId]: true } };
+}
+
+export function isPracticeDone(progress, practiceId) {
+  return Boolean(progress.practices[practiceId]);
 }
