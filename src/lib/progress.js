@@ -1,3 +1,4 @@
+import { capstone } from "../data/capstone.js";
 import { levels, modules } from "../data/curriculum.js";
 import { examPools } from "../data/exams.js";
 import { lessons } from "../data/lessons/index.js";
@@ -122,4 +123,39 @@ export function markPracticeDone(progress, practiceId) {
 
 export function isPracticeDone(progress, practiceId) {
   return Boolean(progress.practices[practiceId]);
+}
+
+export function setCapstoneDraft(progress, partId, text) {
+  return {
+    ...progress,
+    capstone: { ...progress.capstone, [partId]: { ...(progress.capstone[partId] ?? {}), draft: text } },
+  };
+}
+
+export function setCapstoneTrack(progress, partId, track) {
+  return {
+    ...progress,
+    capstone: { ...progress.capstone, [partId]: { ...(progress.capstone[partId] ?? {}), track } },
+  };
+}
+
+export function markCapstonePartDone(progress, partId) {
+  return {
+    ...progress,
+    capstone: { ...progress.capstone, [partId]: { ...(progress.capstone[partId] ?? {}), done: true } },
+  };
+}
+
+export function isCapstonePartDone(progress, partId) {
+  return Boolean(progress.capstone[partId]?.done);
+}
+
+export function isCapstoneComplete(progress) {
+  return capstone.parts.every((p) => isCapstonePartDone(progress, p.id));
+}
+
+// The course is fully complete once every level's modules are complete —
+// this already implies every module exam (where one exists) has been passed.
+export function isCourseComplete(progress) {
+  return levels.every((l) => isLevelComplete(progress, l.id));
 }

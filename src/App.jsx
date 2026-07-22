@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import BestPractices from "./components/BestPractices.jsx";
+import Capstone from "./components/Capstone.jsx";
 import Certificate from "./components/Certificate.jsx";
 import Exam from "./components/Exam.jsx";
 import Glossary from "./components/Glossary.jsx";
@@ -12,14 +13,18 @@ import { lessons } from "./data/lessons/index.js";
 import { practices } from "./data/practices.js";
 import {
   emptyProgress,
+  isCapstoneComplete,
+  isCourseComplete,
   isPracticeDone,
   loadProgress,
+  markCapstonePartDone,
   markLessonDone,
   markPracticeDone,
   recordExamResult,
   saveProgress,
+  setCapstoneDraft,
+  setCapstoneTrack,
   setPracticeDraft,
-  totalDoneLessons,
   totalReadyLessons,
 } from "./lib/progress.js";
 
@@ -37,8 +42,9 @@ export default function App() {
   }, [progress]);
 
   const sel = selected ? lessons.find((l) => l.id === selected) : null;
-  const allDone = totalDoneLessons(progress) === totalReadyLessons();
   const practice = sel ? practices[sel.id] : null;
+  const courseComplete = isCourseComplete(progress);
+  const capstoneComplete = isCapstoneComplete(progress);
 
   const markDone = (id) => {
     setProgress((prev) => markLessonDone(prev, id));
@@ -79,11 +85,26 @@ export default function App() {
     setSelected(id);
   };
 
+  const openStandaloneScreen = (name) => {
+    setSelected(null);
+    setExamModuleId(null);
+    setScreen(name);
+  };
+
   let content;
   if (screen === "glossary") {
     content = <Glossary onOpenLesson={selectLesson} />;
   } else if (screen === "bestPractices") {
     content = <BestPractices />;
+  } else if (screen === "capstone" && courseComplete) {
+    content = (
+      <Capstone
+        progress={progress}
+        onDraftChange={(partId, text) => setProgress((prev) => setCapstoneDraft(prev, partId, text))}
+        onMarkDone={(partId) => setProgress((prev) => markCapstonePartDone(prev, partId))}
+        onSelectTrack={(partId, track) => setProgress((prev) => setCapstoneTrack(prev, partId, track))}
+      />
+    );
   } else if (examModuleId) {
     const mod = modules.find((m) => m.id === examModuleId);
     content = (
@@ -96,8 +117,17 @@ export default function App() {
         onReviewLesson={reviewLesson}
       />
     );
-  } else if (allDone && !sel) {
+  } else if (courseComplete && capstoneComplete && !sel) {
     content = <Certificate total={totalReadyLessons()} onReset={resetProgress} />;
+  } else if (courseComplete && !capstoneComplete && !sel) {
+    content = (
+      <Capstone
+        progress={progress}
+        onDraftChange={(partId, text) => setProgress((prev) => setCapstoneDraft(prev, partId, text))}
+        onMarkDone={(partId) => setProgress((prev) => markCapstonePartDone(prev, partId))}
+        onSelectTrack={(partId, track) => setProgress((prev) => setCapstoneTrack(prev, partId, track))}
+      />
+    );
   } else if (!sel) {
     content = <Welcome />;
   } else {
@@ -127,16 +157,11 @@ export default function App() {
         progress={progress}
         onOpenExam={openExam}
         activeScreen={screen}
-        onOpenGlossary={() => {
-          setSelected(null);
-          setExamModuleId(null);
-          setScreen("glossary");
-        }}
-        onOpenBestPractices={() => {
-          setSelected(null);
-          setExamModuleId(null);
-          setScreen("bestPractices");
-        }}
+        courseComplete={courseComplete}
+        capstoneComplete={capstoneComplete}
+        onOpenGlossary={() => openStandaloneScreen("glossary")}
+        onOpenBestPractices={() => openStandaloneScreen("bestPractices")}
+        onOpenCapstone={() => courseComplete && openStandaloneScreen("capstone")}
       />
 
       <div style={{ flex: 1, overflowY: "auto" }}>{content}</div>

@@ -4,6 +4,7 @@ export const glossaryCategories = [
   { id: "combining", title: "Комбинирование" },
   { id: "authoring", title: "Создание скиллов" },
   { id: "infra", title: "Инфраструктура" },
+  { id: "assistants", title: "Ассистенты и чат-боты" },
 ];
 
 export const glossary = [
@@ -213,5 +214,120 @@ export const glossary = [
     category: "infra",
     definition: "Среда, где скиллы подключаются через ~/.claude/skills или плагины/маркетплейсы.",
     lessons: ["concept-ecosystem", "concept-distribution-security"],
+  },
+  {
+    term: "CLAUDE.md (global / project)",
+    category: "assistants",
+    definition: "Файлы инструкций для персонального ассистента: глобальный — кросс-проектные предпочтения, проектный — специфика конкретного репозитория.",
+    lessons: ["concept-claude-md"],
+  },
+  {
+    term: "Персистентная память",
+    category: "assistants",
+    definition: "Типизированные заметки (user/feedback/project/reference), сохраняющиеся между сессиями ассистента.",
+    lessons: ["concept-persistent-memory"],
+  },
+  {
+    term: "Hook",
+    category: "assistants",
+    definition: "Детерминированное действие, которое среда исполнения выполняет автоматически на определённое событие — в отличие от инструкции, применяемой моделью по усмотрению.",
+    example: "Автоформатирование кода после каждой правки.",
+    lessons: ["concept-hooks"],
+  },
+  {
+    term: "Сабагент",
+    category: "assistants",
+    definition: "Специализированный агент, которому делегируется изолированная задача; не видит контекст родительской сессии.",
+    lessons: ["concept-subagents"],
+  },
+  {
+    term: "Делегирование",
+    category: "assistants",
+    definition: "Передача задачи сабагенту вместо выполнения напрямую — оправдана для независимых, изолируемых или узкоспециализированных задач.",
+    lessons: ["concept-subagents"],
+  },
+  {
+    term: "Claude API",
+    category: "assistants",
+    definition: "Единый программный интерфейс для интеграции Claude в собственные приложения и ботов; stateless — историю нужно передавать целиком при каждом запросе.",
+    lessons: ["concept-api-basics"],
+  },
+  {
+    term: "System prompt",
+    category: "assistants",
+    definition: "Инструкция, задающая роль и ограничения бота на протяжении всего диалога, в отличие от отдельных пользовательских сообщений.",
+    lessons: ["concept-api-basics"],
+  },
+  {
+    term: "Streaming (SSE)",
+    category: "assistants",
+    definition: "Передача ответа модели частями по мере генерации вместо ожидания полного текста — даёт эффект «печатает…» и обходит таймауты на длинных ответах.",
+    lessons: ["concept-streaming"],
+  },
+  {
+    term: "Tool use / function calling",
+    category: "assistants",
+    definition: "Механизм, которым модель запрашивает вызов внешней функции с определённой сигнатурой и получает результат обратно для формирования ответа.",
+    lessons: ["concept-tool-use-bot"],
+  },
+  {
+    term: "Session / context management",
+    category: "assistants",
+    definition: "Сопоставление «пользователь/чат ↔ история диалога» в архитектуре бота — без него нельзя вести раздельные беседы с разными пользователями.",
+    lessons: ["concept-bot-architecture"],
+  },
+  {
+    term: "Короткая vs долгая память диалога",
+    category: "assistants",
+    definition: "Короткая — окно последних сообщений текущей беседы. Долгая — факты о пользователе, сохраняющиеся между сессиями бота.",
+    lessons: ["concept-dialogue-memory"],
+  },
+  {
+    term: "Суммаризация истории",
+    category: "assistants",
+    definition: "Сжатие растущей истории диалога в краткое резюме вместо хранения полного текста всех сообщений.",
+    lessons: ["concept-dialogue-memory"],
+  },
+  {
+    term: "RAG (векторное хранилище)",
+    category: "assistants",
+    definition: "Внешнее хранилище знаний для случаев, когда простого окна диалога и суммаризации недостаточно — тема для отдельного, более глубокого изучения.",
+    lessons: ["concept-dialogue-memory"],
+  },
+  {
+    term: "Prompt caching",
+    category: "assistants",
+    definition: "Кэширование стабильного префикса запроса (system prompt + начало истории) для ускорения и удешевления повторных запросов.",
+    lessons: ["concept-dialogue-memory", "concept-claude-md"],
+  },
+  {
+    term: "Webhook vs polling",
+    category: "assistants",
+    definition: "Webhook — платформа сама уведомляет бота о новом сообщении. Polling — бот сам периодически проверяет наличие новых сообщений.",
+    lessons: ["concept-bot-architecture"],
+  },
+  {
+    term: "Rate limit / retry / backoff",
+    category: "assistants",
+    definition: "Ограничение частоты запросов к API; при превышении стоит повторять запрос с экспоненциально увеличивающейся задержкой.",
+    lessons: ["concept-deploy-ops", "concept-reliability"],
+  },
+  {
+    term: "Fallback",
+    category: "assistants",
+    definition: "Запасной сценарий на случай отказа основного пути — более простая модель или заготовленный ответ вместо полного падения бота.",
+    lessons: ["concept-reliability"],
+  },
+  {
+    term: "Managed Agents",
+    category: "assistants",
+    definition: "Управляемый сервис, берущий на себя оркестрацию и хостинг инструментов бота вместо ручного цикла разработчика.",
+    lessons: ["m8-case", "m9-mcp-bridge"],
+  },
+  {
+    term: "Prompt injection",
+    category: "assistants",
+    definition: "Атака, при которой пользовательский ввод переопределяет операторские инструкции — предотвращается их явным разделением.",
+    lessons: ["m9-security-privacy"],
   },
 ];

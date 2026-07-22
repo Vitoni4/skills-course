@@ -18,7 +18,22 @@ function pluralizeLesson(n) {
   return "уроков";
 }
 
-export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, progress, onOpenExam, activeScreen, onOpenGlossary, onOpenBestPractices }) {
+export default function Sidebar({
+  filter,
+  setFilter,
+  search,
+  setSearch,
+  selected,
+  setSelected,
+  progress,
+  onOpenExam,
+  activeScreen,
+  courseComplete,
+  capstoneComplete,
+  onOpenGlossary,
+  onOpenBestPractices,
+  onOpenCapstone,
+}) {
   const filtered = lessons.filter((l) => {
     const matchCat = filter === "all" || l.badge === filter;
     const matchSearch =
@@ -189,6 +204,23 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
         >
           <span style={{ fontSize: 14 }}>✅</span>
           <span style={{ fontSize: 12, color: activeScreen === "bestPractices" ? "#f0f0f0" : "#9ca3af", fontWeight: 600 }}>Best Practices</span>
+        </div>
+        <div
+          onClick={onOpenCapstone}
+          style={{
+            padding: "8px 12px",
+            borderRadius: 8,
+            cursor: courseComplete ? "pointer" : "default",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: activeScreen === "capstone" ? "#7C3AED22" : "transparent",
+            opacity: courseComplete ? 1 : 0.4,
+          }}
+        >
+          <span style={{ fontSize: 14 }}>{courseComplete ? "🏆" : "🔒"}</span>
+          <span style={{ fontSize: 12, color: activeScreen === "capstone" ? "#f0f0f0" : "#9ca3af", fontWeight: 600 }}>Капстоун</span>
+          {capstoneComplete && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
         </div>
       </div>
     </div>
