@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import BestPractices from "./components/BestPractices.jsx";
 import Certificate from "./components/Certificate.jsx";
 import Exam from "./components/Exam.jsx";
+import Glossary from "./components/Glossary.jsx";
 import Lesson from "./components/Lesson.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import Welcome from "./components/Welcome.jsx";
@@ -28,6 +30,7 @@ export default function App() {
   const [progress, setProgress] = useState(loadProgress);
   const [examModuleId, setExamModuleId] = useState(null);
   const [examAttempt, setExamAttempt] = useState(0);
+  const [screen, setScreen] = useState("course");
 
   useEffect(() => {
     saveProgress(progress);
@@ -47,6 +50,7 @@ export default function App() {
   };
 
   const openExam = (moduleId) => {
+    setScreen("course");
     setExamModuleId(moduleId);
     setExamAttempt(0);
   };
@@ -64,12 +68,23 @@ export default function App() {
   };
 
   const reviewLesson = (lessonId) => {
+    setScreen("course");
     setExamModuleId(null);
     setSelected(lessonId);
   };
 
+  const selectLesson = (id) => {
+    setScreen("course");
+    setExamModuleId(null);
+    setSelected(id);
+  };
+
   let content;
-  if (examModuleId) {
+  if (screen === "glossary") {
+    content = <Glossary onOpenLesson={selectLesson} />;
+  } else if (screen === "bestPractices") {
+    content = <BestPractices />;
+  } else if (examModuleId) {
     const mod = modules.find((m) => m.id === examModuleId);
     content = (
       <Exam
@@ -108,12 +123,20 @@ export default function App() {
         search={search}
         setSearch={setSearch}
         selected={selected}
-        setSelected={(id) => {
-          setExamModuleId(null);
-          setSelected(id);
-        }}
+        setSelected={selectLesson}
         progress={progress}
         onOpenExam={openExam}
+        activeScreen={screen}
+        onOpenGlossary={() => {
+          setSelected(null);
+          setExamModuleId(null);
+          setScreen("glossary");
+        }}
+        onOpenBestPractices={() => {
+          setSelected(null);
+          setExamModuleId(null);
+          setScreen("bestPractices");
+        }}
       />
 
       <div style={{ flex: 1, overflowY: "auto" }}>{content}</div>

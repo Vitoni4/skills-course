@@ -18,7 +18,7 @@ function pluralizeLesson(n) {
   return "уроков";
 }
 
-export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, progress, onOpenExam }) {
+export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, progress, onOpenExam, activeScreen, onOpenGlossary, onOpenBestPractices }) {
   const filtered = lessons.filter((l) => {
     const matchCat = filter === "all" || l.badge === filter;
     const matchSearch =
@@ -173,6 +173,23 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
             </div>
           );
         })}
+      </div>
+
+      <div style={{ borderTop: "1px solid #1e1e3a", padding: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div
+          onClick={onOpenGlossary}
+          style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, background: activeScreen === "glossary" ? "#7C3AED22" : "transparent" }}
+        >
+          <span style={{ fontSize: 14 }}>📖</span>
+          <span style={{ fontSize: 12, color: activeScreen === "glossary" ? "#f0f0f0" : "#9ca3af", fontWeight: 600 }}>Глоссарий</span>
+        </div>
+        <div
+          onClick={onOpenBestPractices}
+          style={{ padding: "8px 12px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, background: activeScreen === "bestPractices" ? "#7C3AED22" : "transparent" }}
+        >
+          <span style={{ fontSize: 14 }}>✅</span>
+          <span style={{ fontSize: 12, color: activeScreen === "bestPractices" ? "#f0f0f0" : "#9ca3af", fontWeight: 600 }}>Best Practices</span>
+        </div>
       </div>
     </div>
   );
