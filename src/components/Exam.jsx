@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { skills } from "../data/skills.js";
+import { lessons } from "../data/lessons/index.js";
 
 function shuffle(arr) {
   const a = [...arr];
@@ -20,7 +20,7 @@ function isCorrectAnswer(question, answer) {
 }
 
 function topicLabel(topic) {
-  const lesson = skills.find((s) => s.id === topic);
+  const lesson = lessons.find((l) => l.id === topic);
   return lesson ? lesson.name : topic;
 }
 
@@ -87,7 +87,7 @@ export default function Exam({ moduleTitle, examData, onFinish, onExit, onReview
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {result.missedTopics.map((topic) => {
-                const lesson = skills.find((s) => s.id === topic);
+                const lesson = lessons.find((l) => l.id === topic);
                 return (
                   <div key={topic} style={{ fontSize: 13, color: "#d1d5db" }}>
                     {lesson ? (

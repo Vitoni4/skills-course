@@ -4,10 +4,10 @@ import Exam from "./components/Exam.jsx";
 import Lesson from "./components/Lesson.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import Welcome from "./components/Welcome.jsx";
-import { examPools } from "./data/exams.js";
-import { practices } from "./data/practices.js";
-import { skills } from "./data/skills.js";
 import { modules } from "./data/curriculum.js";
+import { examPools } from "./data/exams.js";
+import { lessons } from "./data/lessons/index.js";
+import { practices } from "./data/practices.js";
 import {
   emptyProgress,
   isPracticeDone,
@@ -33,7 +33,7 @@ export default function App() {
     saveProgress(progress);
   }, [progress]);
 
-  const sel = selected ? skills.find((s) => s.id === selected) : null;
+  const sel = selected ? lessons.find((l) => l.id === selected) : null;
   const allDone = totalDoneLessons(progress) === totalReadyLessons();
   const practice = sel ? practices[sel.id] : null;
 
@@ -88,7 +88,7 @@ export default function App() {
   } else {
     content = (
       <Lesson
-        skill={sel}
+        lesson={sel}
         done={progress.completedLessons.includes(sel.id)}
         onPass={() => markDone(sel.id)}
         practice={practice}

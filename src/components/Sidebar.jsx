@@ -1,12 +1,13 @@
 import { levels, modules } from "../data/curriculum.js";
 import { examPools } from "../data/exams.js";
-import { skills } from "../data/skills.js";
+import { lessons } from "../data/lessons/index.js";
 import { isLevelUnlocked, isModuleExamPassed, moduleStats, totalDoneLessons, totalReadyLessons } from "../lib/progress.js";
 
 const categories = [
-  { id: "all", label: "Все скиллы", count: skills.length },
-  { id: "PUBLIC", label: "Встроенные", count: skills.filter((s) => s.badge === "PUBLIC").length },
-  { id: "EXAMPLE", label: "Примеры", count: skills.filter((s) => s.badge === "EXAMPLE").length },
+  { id: "all", label: "Все уроки", count: lessons.length },
+  { id: "PUBLIC", label: "Встроенные", count: lessons.filter((l) => l.badge === "PUBLIC").length },
+  { id: "EXAMPLE", label: "Примеры", count: lessons.filter((l) => l.badge === "EXAMPLE").length },
+  { id: "GUIDE", label: "Теория", count: lessons.filter((l) => l.badge === "GUIDE").length },
 ];
 
 function pluralizeLesson(n) {
@@ -18,15 +19,15 @@ function pluralizeLesson(n) {
 }
 
 export default function Sidebar({ filter, setFilter, search, setSearch, selected, setSelected, progress, onOpenExam }) {
-  const filtered = skills.filter((s) => {
-    const matchCat = filter === "all" || s.badge === filter;
+  const filtered = lessons.filter((l) => {
+    const matchCat = filter === "all" || l.badge === filter;
     const matchSearch =
       !search ||
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.tagline.toLowerCase().includes(search.toLowerCase());
+      l.name.toLowerCase().includes(search.toLowerCase()) ||
+      l.tagline.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
-  const filteredIds = new Set(filtered.map((s) => s.id));
+  const filteredIds = new Set(filtered.map((l) => l.id));
   const isFiltering = Boolean(search) || filter !== "all";
 
   const doneCount = totalDoneLessons(progress);
@@ -97,7 +98,7 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
               ) : (
                 levelModules.map((mod) => {
                   const stats = moduleStats(progress, mod.id);
-                  const lessons = skills.filter((s) => s.moduleId === mod.id && filteredIds.has(s.id));
+                  const moduleLessons = lessons.filter((l) => l.moduleId === mod.id && filteredIds.has(l.id));
                   const stubCount = Math.max(stats.lessonsPlanned - stats.lessonsReady, 0);
 
                   if (stats.lessonsReady === 0) {
@@ -114,7 +115,7 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
                     );
                   }
 
-                  if (lessons.length === 0 && isFiltering) return null;
+                  if (moduleLessons.length === 0 && isFiltering) return null;
 
                   return (
                     <div key={mod.id} style={{ paddingBottom: 4 }}>
@@ -126,21 +127,21 @@ export default function Sidebar({ filter, setFilter, search, setSearch, selected
                           {stats.lessonsDone}/{stats.lessonsReady}
                         </span>
                       </div>
-                      {lessons.map((s) => (
+                      {moduleLessons.map((l) => (
                         <div
-                          key={s.id}
-                          onClick={() => setSelected(s.id)}
-                          style={{ padding: "12px 16px", cursor: "pointer", borderLeft: selected === s.id ? `3px solid ${s.color}` : "3px solid transparent", background: selected === s.id ? s.color + "12" : "transparent", transition: "all 0.15s", borderBottom: "1px solid #0d0d1a" }}
+                          key={l.id}
+                          onClick={() => setSelected(l.id)}
+                          style={{ padding: "12px 16px", cursor: "pointer", borderLeft: selected === l.id ? `3px solid ${l.color}` : "3px solid transparent", background: selected === l.id ? l.color + "12" : "transparent", transition: "all 0.15s", borderBottom: "1px solid #0d0d1a" }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                            <span style={{ fontSize: 18 }}>{s.emoji}</span>
-                            <span style={{ fontWeight: 700, fontSize: 14, color: selected === s.id ? "#f0f0f0" : "#d1d5db" }}>{s.name}</span>
-                            {progress.completedLessons.includes(s.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
-                            {!progress.completedLessons.includes(s.id) && (
-                              <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: s.badgeColor + "33", color: s.badgeColor, fontWeight: 700, letterSpacing: 0.5 }}>{s.badge}</span>
+                            <span style={{ fontSize: 18 }}>{l.emoji}</span>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: selected === l.id ? "#f0f0f0" : "#d1d5db" }}>{l.name}</span>
+                            {progress.completedLessons.includes(l.id) && <span style={{ marginLeft: "auto", color: "#22c55e", fontSize: 13 }}>✓</span>}
+                            {!progress.completedLessons.includes(l.id) && (
+                              <span style={{ marginLeft: "auto", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: l.badgeColor + "33", color: l.badgeColor, fontWeight: 700, letterSpacing: 0.5 }}>{l.badge}</span>
                             )}
                           </div>
-                          <div style={{ fontSize: 11, color: "#6b6b8a", lineHeight: 1.4 }}>{s.tagline}</div>
+                          <div style={{ fontSize: 11, color: "#6b6b8a", lineHeight: 1.4 }}>{l.tagline}</div>
                         </div>
                       ))}
                       {stubCount > 0 && !isFiltering && (

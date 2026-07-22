@@ -1,6 +1,6 @@
 import { levels, modules } from "../data/curriculum.js";
 import { examPools } from "../data/exams.js";
-import { skills } from "../data/skills.js";
+import { lessons } from "../data/lessons/index.js";
 
 const STORAGE_KEY = "skills-course-progress";
 const VERSION = 2;
@@ -41,7 +41,7 @@ export function saveProgress(progress) {
 }
 
 function readyLessonsForModule(moduleId) {
-  return skills.filter((s) => s.moduleId === moduleId);
+  return lessons.filter((l) => l.moduleId === moduleId);
 }
 
 export function isModuleExamPassed(progress, moduleId) {
@@ -88,16 +88,15 @@ export function isLevelComplete(progress, levelId) {
   return levelModules.every((m) => moduleStats(progress, m.id).isComplete);
 }
 
-// Level N+1 unlocks once level N is complete — per-module that means "exam
-// passed" where a pool exists (moduleStats.isComplete), falling back to
-// "all ready lessons done" for modules whose exam pool isn't written yet.
+// A level unlocks once every earlier level is complete — checked
+// transitively (not just the immediately preceding one), so a locked level
+// can't be skipped just because a later level happens to be vacuously
+// complete (no ready content yet).
 export function isLevelUnlocked(progress, levelId) {
   const level = levels.find((l) => l.id === levelId);
   if (!level) return false;
-  if (level.order === 1) return true;
-  const prevLevel = levels.find((l) => l.order === level.order - 1);
-  if (!prevLevel) return true;
-  return isLevelComplete(progress, prevLevel.id);
+  const priorLevels = levels.filter((l) => l.order < level.order);
+  return priorLevels.every((l) => isLevelComplete(progress, l.id));
 }
 
 export function markLessonDone(progress, lessonId) {
@@ -106,11 +105,11 @@ export function markLessonDone(progress, lessonId) {
 }
 
 export function totalReadyLessons() {
-  return skills.length;
+  return lessons.length;
 }
 
 export function totalDoneLessons(progress) {
-  return skills.filter((s) => progress.completedLessons.includes(s.id)).length;
+  return lessons.filter((l) => progress.completedLessons.includes(l.id)).length;
 }
 
 export function setPracticeDraft(progress, practiceId, text) {
