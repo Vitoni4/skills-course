@@ -1,34 +1,6 @@
-// Единственные готовые уроки модулей 3, 5, 6 — остальные уроки этих
+// Единственные готовые уроки модулей 5 и 6 — остальные уроки этих
 // модулей будут добавлены в следующих этапах куррикулума.
 export const other = [
-  {
-    id: "product-self-knowledge",
-    moduleId: "m3",
-    order: 1,
-    type: "skill",
-    emoji: "🤖",
-    name: "Product Self-Knowledge",
-    badge: "PUBLIC",
-    badgeColor: "#059669",
-    tagline: "Актуальные факты о продуктах Anthropic",
-    trigger: "Claude Code, Claude API, claude.ai, тарифы, модели, SDK, лимиты",
-    notTrigger: "Общие вопросы о программировании не связанные с Anthropic",
-    what: [
-      "Claude Code: установка, требования, настройка MCP",
-      "Claude API: tool use, batch processing, streaming, SDK",
-      "Модели: актуальные названия и строки (claude-sonnet-4-6 и др.)",
-      "claude.ai: планы Pro/Team/Enterprise, лимиты",
-      "Ценообразование и rate limits",
-    ],
-    example: "«Как установить Claude Code на Windows? Какая модель самая быстрая сейчас?»",
-    stack: "Документация Anthropic (проверяет актуальные данные)",
-    color: "#0891B2",
-    quiz: {
-      question: "Пользователь спрашивает про актуальные тарифы claude.ai и лимиты. Какой скилл?",
-      options: ["Skill Creator", "MCP Builder", "Product Self-Knowledge", "File Reading"],
-      correct: 2,
-    },
-  },
   {
     id: "skill-creator",
     moduleId: "m5",
